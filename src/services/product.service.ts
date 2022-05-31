@@ -1,76 +1,92 @@
-import { CreateProductDto, IProduct, UpdateProductDto } from "../interfaces/product.interface";
-import faker from "faker";
 import boom from "@hapi/boom";
+import { PrismaClient, product } from "@prisma/client";
 
-import { getConnection } from "../lib/postgres";
-import { pool } from "../lib/postgres.pool";
-import { Pool } from "pg";
+// import { getConnection } from "../lib/postgres";// import { pool } from "../lib/postgres.pool";
+// import { Pool } from "pg";
+const prisma = new PrismaClient();
 
 export class ProductService {
-  private products: IProduct[] = [];
-  private pool: Pool;
+  // private pool: Pool;
 
   constructor() {
-    this.generate();
-    this.pool = pool;
-    this.pool.on("error", (err) => console.error(err));
+    // this.pool = pool; // this.pool.on("error", (err) => console.error(err));
   }
 
-  generate() {
-    const limit = 5;
-    for (let i = 0; i < limit; i++) {
-      this.products.push({
-        id: faker.datatype.uuid(),
-        name: faker.commerce.productName(),
-        price: parseInt(faker.commerce.price(), 10),
-        image: faker.image.imageUrl(),
-        isBlock: faker.datatype.boolean(),
-      });
+  async findMany(query: { limit?: any; offset?: any; min?: any; max?: any }) {
+    let options: any = {
+      include: {
+        category: {
+          select: { name: true },
+        },
+      },
+    };
+
+    if (query.limit !== undefined && query.offset !== undefined) {
+      options.skip = parseInt(query.offset, 10);
+      options.take = parseInt(query.limit, 10);
+    }
+
+    if (query.min !== undefined && query.max !== undefined) {
+      options.where = {
+        price: {
+          lt: parseFloat(query.max),
+          gt: parseFloat(query.min),
+        },
+      };
+    }
+
+    const products = await prisma.product.findMany(options);
+    return products;
+  }
+
+  async create(data: product) {
+    try {
+      const newProduct = await prisma.product.create({ data });
+      return newProduct;
+    } catch (error) {
+      throw boom.internal("Server error");
     }
   }
 
-  create(data: CreateProductDto) {
-    const newProduct = { id: faker.datatype.uuid(), ...data };
-    this.products.push(newProduct);
-    return newProduct;
-  }
-
-  async prueba() {
-    // const client = await getConnection();
-    const rta = await this.pool.query("SELECT * FROM task");
-    return rta.rows;
-  }
-
-  findMany() {
-    return this.products;
-  }
-
-  findOne(id: string): IProduct {
-    const product = this.products.find((item) => item.id === id);
+  async findOne(id: string) {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { category: { select: { name: true } } },
+    });
     if (!product) {
       throw boom.notFound("Product not found");
     }
-    if (product.isBlock) {
-      throw boom.conflict("Product is block");
-    }
+
     return product;
   }
 
-  update(id: string, changes: UpdateProductDto) {
-    const index = this.products.findIndex((item) => item.id === id);
-    if (index === -1) {
+  async update(changes: product, id: string) {
+    const { category, ...rest } = await this.findOne(id);
+
+    if (!category) {
       throw boom.notFound("Product not found");
     }
-    this.products[index] = { ...this.products[index], ...changes };
-    return this.products[index];
+
+    const changesProduct = { ...rest, ...changes };
+    const productUpdate = await prisma.product.update({
+      data: changesProduct,
+      where: { id },
+    });
+
+    return productUpdate;
   }
 
-  delete(id: string) {
-    const index = this.products.findIndex((item) => item.id === id);
-    if (index === -1) {
+  async remove(id: string) {
+    const { category, ...rest } = await this.findOne(id);
+
+    if (!category) {
       throw boom.notFound("Product not found");
     }
-    this.products.splice(index, 1);
-    return id;
+
+    const item = await prisma.product.delete({
+      where: { id },
+    });
+
+    return item;
   }
 }

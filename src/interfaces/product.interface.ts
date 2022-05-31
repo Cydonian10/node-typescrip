@@ -3,7 +3,7 @@ export interface IProduct {
   name: string;
   image: string;
   price: number;
-  isBlock: boolean;
+  categoryId: string;
 }
 
 export interface CreateProductDto extends Omit<IProduct, "id"> {}

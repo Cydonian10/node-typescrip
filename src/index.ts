@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { boomErrorHandler, errorHandler, logHandler } from "./middlewares/error.handles";
 import { routerApi } from "./routes";
 import cors from "cors";
@@ -19,6 +19,7 @@ const options = {
   },
 };
 app.use(cors());
+
 routerApi(app);
 
 /**
@@ -31,5 +32,3 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log("Mi port" + port);
 });
-
-//clase metodo para crear
