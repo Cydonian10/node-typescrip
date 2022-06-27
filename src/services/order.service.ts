@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { order, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -16,11 +16,20 @@ export class OrderServie {
     console.log(data);
     const newOrder = await prisma.order.create({
       data: {
-        ...data,
+        customerId: data.customerId,
       },
     });
 
     return newOrder;
+  }
+
+  async findByUser(userId: string) {
+    const orders = await prisma.order.findFirst({
+      where: { customer: { userId: userId } },
+      include: { customer: true, order_product_table: { include: { product: true } } },
+    });
+
+    return orders;
   }
 
   async addItem(data: any) {

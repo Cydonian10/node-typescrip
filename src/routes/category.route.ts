@@ -1,4 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
+import passport from "passport";
+import { checkAdminRol } from "../middlewares/auth.handle";
 import { validatorHandler } from "../middlewares/validatorHandler";
 import {
   CreateCategorySchema,
@@ -10,7 +12,7 @@ import { CategoryService } from "../services/category.service";
 const router = express.Router();
 const service = new CategoryService();
 
-router.get("/", findMany);
+router.get("/", passport.authenticate("jwt", { session: false }), checkAdminRol, findMany);
 
 router.get("/:id", validatorHandler(getCateogorySchema), findOne);
 

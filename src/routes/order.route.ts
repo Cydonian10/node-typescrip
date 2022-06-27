@@ -26,6 +26,7 @@ async function findMany(req: Request, res: Response, next: NextFunction) {
 
 async function create(req: Request, res: Response, next: NextFunction) {
   const body = req.body;
+  console.log(body);
   try {
     const newOrder = await service.create(body);
     return res.json({

@@ -1,6 +1,7 @@
 import { notFound } from "@hapi/boom";
 import { PrismaClient } from "@prisma/client";
 import { IFullUser } from "../interfaces/user.interfae";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 export class CustomerService {
@@ -35,16 +36,21 @@ export class CustomerService {
   }
 
   async createFullUserCustomer(data: any) {
+    console.log(data);
+    const hash = await bcrypt.hash(data.user.password, 2);
+
     const newCustomer = await prisma.customer.create({
       data: {
         lastName: data.lastName,
         name: data.name,
         user: {
           create: {
-            ...data.user,
+            email: data.user.email,
+            password: hash,
           },
         },
       },
+      include: { user: { select: { email: true } } },
     });
 
     return newCustomer;

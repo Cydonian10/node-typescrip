@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "customer" ALTER COLUMN "name" SET DATA TYPE VARCHAR(100);

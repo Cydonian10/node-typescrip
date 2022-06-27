@@ -20,6 +20,8 @@ const options = {
 };
 app.use(cors());
 
+import "./utils/auth";
+
 routerApi(app);
 
 /**
